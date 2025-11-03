@@ -3,6 +3,7 @@ jobs:
   deploy:
     docker:
       - image: cimg/ruby:3.1-node
+      - working_directory: ~/repo/raisetech-live8-sample-app
     steps:
       - checkout
       - run:
