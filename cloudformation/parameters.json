@@ -1,1 +1,19 @@
+[
+  {
+    "ParameterKey": "KeyName",
+    "ParameterValue": "my-ec2-key"
+  },
+  {
+    "ParameterKey": "DBUsername",
+    "ParameterValue": "admin"
+  },
+  {
+    "ParameterKey": "DBPassword",
+    "ParameterValue": "StrongPassword123!"
+  },
+  {
+    "ParameterKey": "S3BucketName",
+    "ParameterValue": "lecture13-app-images"
+  }
+]
 
