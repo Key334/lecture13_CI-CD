@@ -1,1 +1,24 @@
+- name: Create Puma service file
+  copy:
+    dest: /etc/systemd/system/puma.service
+    content: |
+      [Unit]
+      Description=Puma HTTP Server
+      After=network.target
+
+      [Service]
+      Type=simple
+      User=ec2-user
+      WorkingDirectory={{ deploy_path }}
+      ExecStart=/usr/local/bin/bundle exec puma -C config/puma.rb
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Start puma
+  systemd:
+    name: puma
+    state: started
+    enabled: yes
 
