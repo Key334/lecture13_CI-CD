@@ -1,1 +1,11 @@
+- hosts: web
+  become: true
+  vars:
+    app_name: raisetech-live8-sample-app
+    deploy_path: /var/www/raisetech-live8-sample-app
+  roles:
+    - role: common
+    - role: app
+    - role: nginx
+    - role: puma
 
