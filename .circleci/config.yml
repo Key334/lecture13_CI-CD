@@ -5,35 +5,53 @@ orbs:
   aws-cli: circleci/aws-cli@5.4.1
 
 jobs:
-  build:
+  deploy:
     docker:
       - image: cimg/ruby:3.1
-    working_directory: ~/repo/raisetech-live8-sample-app  # 👈 Gemfileがある場所に変更
+    working_directory: ~/project
     steps:
       - checkout
+
       - run:
-          name: Move into app directory
-          command: cd raisetech-live8-sample-app
+          name: Clone Rails app repository
+          command: |
+            git clone https://github.com/yuta-ushijima/raisetech-live8-sample-app.git app
+            cd app
+            ls -la  # 確認用
+
       - run:
           name: Install dependencies
           command: |
-          　sudo apt-get update -y
-            sudo apt-get install -y ansible awscli
+            cd app
+            sudo apt-get update -y
+            sudo apt-get install -y python3 python3-pip nodejs
+            pip3 install ansible boto3 awscli
             gem install bundler
             bundle install
-    　- run:
-          name: Run Ansible Playbook
-          command: |
-            ansible-playbook -i ansible/inventory/production ansible/playbook.yml            
+
       - run:
-          name: Run tests
-          command: bundle exec rspec  # テストがある場合
+          name: Setup SSH key
+          command: |
+            mkdir -p ~/.ssh
+            echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
+
+      - run:
+          name: Deploy to EC2 with Ansible
+          command: |
+            cd ansible
+            ansible-playbook -i inventories/production.ini playbooks/deploy.yml
+
+      - run:
+          name: Run Serverspec tests
+          command: |
+            cd app
+            bundle exec rake spec
 
 workflows:
   version: 2
-  deploy_on_push:
+  deploy-workflow:
     jobs:
-      - deploy:
-          filters:
-            branches:
-              only: main
+      - deploy
+
