@@ -1,1 +1,22 @@
+- name: Create deploy directory
+  file:
+    path: "{{ deploy_path }}"
+    state: directory
+    owner: ec2-user
+    mode: 0755
+
+- name: Copy app files
+  synchronize:
+    src: "{{ playbook_dir }}/../../"
+    dest: "{{ deploy_path }}"
+    delete: yes
+
+- name: Install dependencies
+  command: bundle install chdir={{ deploy_path }}
+
+- name: Migrate database
+  command: bundle exec rails db:migrate RAILS_ENV=production chdir={{ deploy_path }}
+
+- name: Precompile assets
+  command: bundle exec rails assets:precompile RAILS_ENV=production chdir={{ deploy_path }}
 
