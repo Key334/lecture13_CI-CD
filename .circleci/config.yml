@@ -1,54 +1,27 @@
 version: 2.1
-
-orbs:
-  aws-cli: circleci/aws-cli@5.4.1
-  ruby: circleci/ruby@1.1.1
-  node: circleci/node@5.0.0
-
 jobs:
-  build:
+  deploy:
     docker:
-      - image: cimg/ruby:3.2.3-node   # 適切なイメージを選択
+      - image: cimg/ruby:3.1-node
     steps:
       - checkout
-      - ruby/install-deps
       - run:
-          name: Install bundler gems
+          name: Install dependencies
           command: |
-            gem install bundler -v 2.3.14
-            bundle config set --local path 'vendor/bundle'
-            bundle install --jobs=4 --retry=3
+            sudo apt-get update -y
+            sudo apt-get install -y ansible awscli
+            gem install bundler
+            bundle install
       - run:
-          name: Run RSpec
+          name: Run Ansible Playbook
           command: |
-            bundle exec rspec || true   # テスト失敗を許すならtrueを外す
-      - run:
-          name: Assets precompile
-          command: |
-            RAILS_ENV=production bundle exec rake assets:precompile
-      - run:
-          name: Create deploy artifact
-          command: |
-            tar czf app_release.tar.gz --exclude=log --exclude=tmp --exclude=vendor/bundle .
-      - aws-cli/setup:
-          aws-access-key-id: AWS_ACCESS_KEY_ID
-          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
-          aws-region: ap-northeast-1
-      - run:
-          name: Upload artifact to S3
-          command: |
-            aws s3 cp app_release.tar.gz s3://your-deploy-bucket/releases/app_release-${CIRCLE_SHA1}.tar.gz
-      - run:
-          name: Run Ansible deploy (uses SSH key from env var)
-          command: |
-            mkdir -p ~/.ssh
-            echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
-            chmod 600 ~/.ssh/deploy_key
-            # ansible-runner / playbook 呼び出し
-            pip install ansible boto3
-            ansible-playbook -i inventory/production deploy.yml --private-key ~/.ssh/deploy_key -e release_s3_key=releases/app_release-${CIRCLE_SHA1}.tar.gz
+            ansible-playbook -i ansible/inventory/production ansible/playbook.yml
+
 workflows:
   version: 2
-  build_and_deploy:
+  deploy_on_push:
     jobs:
-      - build
+      - deploy:
+          filters:
+            branches:
+              only: main
