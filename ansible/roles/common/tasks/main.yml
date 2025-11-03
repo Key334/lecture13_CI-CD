@@ -1,1 +1,16 @@
+- name: Update all packages
+  yum:
+    name: '*'
+    state: latest
+
+- name: Install basic dependencies
+  yum:
+    name:
+      - git
+      - nginx
+      - ruby
+      - nodejs
+      - mysql
+      - mysql-devel
+    state: present
 
