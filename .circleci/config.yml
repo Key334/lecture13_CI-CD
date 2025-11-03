@@ -1,22 +1,33 @@
 version: 2.1
+
+orbs:
+  ruby: circleci/ruby@2.1.1
+  aws-cli: circleci/aws-cli@5.4.1
+
 jobs:
-  deploy:
+  build:
     docker:
-      - image: cimg/ruby:3.1-node
-      - working_directory: ~/repo/raisetech-live8-sample-app
+      - image: cimg/ruby:3.1
+    working_directory: ~/repo/raisetech-live8-sample-app  # 👈 Gemfileがある場所に変更
     steps:
       - checkout
       - run:
+          name: Move into app directory
+          command: cd raisetech-live8-sample-app
+      - run:
           name: Install dependencies
           command: |
-            sudo apt-get update -y
+          　sudo apt-get update -y
             sudo apt-get install -y ansible awscli
             gem install bundler
             bundle install
       - run:
           name: Run Ansible Playbook
           command: |
-            ansible-playbook -i ansible/inventory/production ansible/playbook.yml
+            ansible-playbook -i ansible/inventory/production ansible/playbook.yml            
+      - run:
+          name: Run tests
+          command: bundle exec rspec  # テストがある場合
 
 workflows:
   version: 2
